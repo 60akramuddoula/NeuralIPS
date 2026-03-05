@@ -1,0 +1,194 @@
+{
+  "experiment": "exp4_defenses",
+  "n_queries": 5,
+  "dataset": "NQ_100",
+  "statistical_test": "McNemar (Yates corrected) + Bootstrap 95% CI (n=1000)",
+  "elapsed_s": 1.78,
+  "defenses": {
+    "paraphrasing": {
+      "defense": "paraphrasing",
+      "n_variants": 5,
+      "grasp": {
+        "asr": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "ci_str": "1.000 [1.000, 1.000]"
+      },
+      "poisonedrag_bb": {
+        "asr": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "ci_str": "1.000 [1.000, 1.000]"
+      },
+      "delta_asr": 0.0,
+      "mcnemar_chi2": 0.0,
+      "mcnemar_p": 1.0,
+      "significance": "ns"
+    },
+    "ppl_filtering": {
+      "defense": "ppl_filtering",
+      "thresholds": [
+        {
+          "ppl_threshold_pct": 0.5,
+          "ppl_cutoff_value": 0.1942,
+          "grasp": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "delta_asr": 0.0,
+          "mcnemar_p": 1.0,
+          "significance": "ns"
+        },
+        {
+          "ppl_threshold_pct": 0.75,
+          "ppl_cutoff_value": 0.204,
+          "grasp": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "delta_asr": 0.0,
+          "mcnemar_p": 1.0,
+          "significance": "ns"
+        },
+        {
+          "ppl_threshold_pct": 0.9,
+          "ppl_cutoff_value": 0.2131,
+          "grasp": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "delta_asr": 0.0,
+          "mcnemar_p": 1.0,
+          "significance": "ns"
+        },
+        {
+          "ppl_threshold_pct": 0.95,
+          "ppl_cutoff_value": 0.2192,
+          "grasp": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "ci_str": "0.000 [0.000, 0.000]"
+          },
+          "delta_asr": 0.0,
+          "mcnemar_p": 1.0,
+          "significance": "ns"
+        }
+      ]
+    },
+    "knowledge_expansion": {
+      "defense": "knowledge_expansion",
+      "k_values": [
+        {
+          "k": 5,
+          "grasp": {
+            "asr": 1.0,
+            "ci_str": "1.000 [1.000, 1.000]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.8,
+            "ci_str": "0.800 [0.400, 1.000]"
+          },
+          "delta_asr": 0.2,
+          "mcnemar_p": 0.7237
+        },
+        {
+          "k": 10,
+          "grasp": {
+            "asr": 1.0,
+            "ci_str": "1.000 [1.000, 1.000]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.4,
+            "ci_str": "0.400 [0.000, 0.800]"
+          },
+          "delta_asr": 0.6,
+          "mcnemar_p": 0.3074
+        },
+        {
+          "k": 20,
+          "grasp": {
+            "asr": 0.4,
+            "ci_str": "0.400 [0.000, 0.800]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.4,
+            "ci_str": "0.400 [0.000, 0.800]"
+          },
+          "delta_asr": 0.0,
+          "mcnemar_p": 0.8597
+        },
+        {
+          "k": 30,
+          "grasp": {
+            "asr": 0.4,
+            "ci_str": "0.400 [0.000, 0.800]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.2,
+            "ci_str": "0.200 [0.000, 0.600]"
+          },
+          "delta_asr": 0.2,
+          "mcnemar_p": 0.7237
+        },
+        {
+          "k": 50,
+          "grasp": {
+            "asr": 0.4,
+            "ci_str": "0.400 [0.000, 0.800]"
+          },
+          "poisonedrag_bb": {
+            "asr": 0.4,
+            "ci_str": "0.400 [0.000, 0.800]"
+          },
+          "delta_asr": 0.0,
+          "mcnemar_p": 0.8026
+        }
+      ]
+    },
+    "deduplication": {
+      "defense": "deduplication",
+      "grasp": {
+        "asr": 1.0,
+        "ci_str": "1.000 [1.000, 1.000]"
+      },
+      "poisonedrag_bb": {
+        "asr": 1.0,
+        "ci_str": "1.000 [1.000, 1.000]"
+      },
+      "delta_asr": 0.0,
+      "mcnemar_p": 1.0,
+      "significance": "ns"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "dataset": "NQ",
+  "conditions": {
+    "PoisonedRAG-BB": {
+      "asr": 1.0,
+      "asr_ci_low": 1.0,
+      "asr_ci_high": 1.0,
+      "f1_mean": 0.8666666666666668,
+      "sim_delta": 0.015887144764715325,
+      "mean_time_s": 0.0017921924591064453,
+      "n_queries": 3
+    },
+    "GRASP-Random": {
+      "asr": 0.6666666666666666,
+      "asr_ci_low": 0.0,
+      "asr_ci_high": 1.0,
+      "f1_mean": 0.8666666666666668,
+      "sim_delta": 0.015887144764715325,
+      "mean_time_s": 0.0003822644551595052,
+      "n_queries": 3
+    },
+    "GRASP-Full": {
+      "asr": 1.0,
+      "asr_ci_low": 1.0,
+      "asr_ci_high": 1.0,
+      "f1_mean": 1.0,
+      "sim_delta": 0.029562836747279858,
+      "mean_time_s": 0.003714481989542643,
+      "n_queries": 3
+    }
+  }
+}

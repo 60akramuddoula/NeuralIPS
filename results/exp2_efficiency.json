@@ -1,0 +1,76 @@
+{
+  "NQ": {
+    "dataset": "NQ",
+    "results_by_n": {
+      "1": {
+        "n_inject": 1,
+        "n_queries": 3,
+        "PoisonedRAG-BB": {
+          "asr": 0.6666666666666666,
+          "asr_count": 2,
+          "ci_low": 0.0,
+          "ci_high": 1.0
+        },
+        "GRASP": {
+          "asr": 0.0,
+          "asr_count": 0,
+          "ci_low": 0.0,
+          "ci_high": 0.0
+        }
+      },
+      "2": {
+        "n_inject": 2,
+        "n_queries": 3,
+        "PoisonedRAG-BB": {
+          "asr": 1.0,
+          "asr_count": 3,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "GRASP": {
+          "asr": 1.0,
+          "asr_count": 3,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        }
+      }
+    }
+  },
+  "HotpotQA": {
+    "dataset": "HotpotQA",
+    "results_by_n": {
+      "1": {
+        "n_inject": 1,
+        "n_queries": 3,
+        "PoisonedRAG-BB": {
+          "asr": 0.6666666666666666,
+          "asr_count": 2,
+          "ci_low": 0.0,
+          "ci_high": 1.0
+        },
+        "GRASP": {
+          "asr": 0.0,
+          "asr_count": 0,
+          "ci_low": 0.0,
+          "ci_high": 0.0
+        }
+      },
+      "2": {
+        "n_inject": 2,
+        "n_queries": 3,
+        "PoisonedRAG-BB": {
+          "asr": 1.0,
+          "asr_count": 3,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        },
+        "GRASP": {
+          "asr": 1.0,
+          "asr_count": 3,
+          "ci_low": 1.0,
+          "ci_high": 1.0
+        }
+      }
+    }
+  }
+}

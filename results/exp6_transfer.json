@@ -1,0 +1,46 @@
+{
+  "dataset": "NQ",
+  "source_retriever": "Contriever",
+  "transfer_results": {
+    "Contriever-ms": {
+      "PoisonedRAG-BB": {
+        "f1_mean": 0.96,
+        "f1_std": 0.09797958971132709
+      },
+      "GRASP": {
+        "f1_mean": 1.0,
+        "f1_std": 0.0
+      }
+    },
+    "ANCE": {
+      "PoisonedRAG-BB": {
+        "f1_mean": 0.988,
+        "f1_std": 0.08399999999999999
+      },
+      "GRASP": {
+        "f1_mean": 1.0,
+        "f1_std": 0.0
+      }
+    },
+    "BM25": {
+      "PoisonedRAG-BB": {
+        "f1_mean": 0.01,
+        "f1_std": 0.09949874371066199
+      },
+      "GRASP": {
+        "f1_mean": 0.01,
+        "f1_std": 0.09949874371066199
+      }
+    },
+    "DPR": {
+      "PoisonedRAG-BB": {
+        "f1_mean": 1.0,
+        "f1_std": 0.0
+      },
+      "GRASP": {
+        "f1_mean": 1.0,
+        "f1_std": 0.0
+      }
+    }
+  }
+}

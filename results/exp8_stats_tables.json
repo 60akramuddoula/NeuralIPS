@@ -1,0 +1,179 @@
+{
+  "experiment": "exp8_significance",
+  "n_conditions": 3,
+  "n_significant_p05": 0,
+  "mean_delta_asr_grasp_vs_bb": -0.0667,
+  "bootstrap_n_resamples": 2000,
+  "statistical_tests": [
+    "Bootstrap 95% CI (percentile method)",
+    "McNemar (Yates corrected)"
+  ],
+  "elapsed_s": 4.42,
+  "table_s1_s2_asr_comparison": [
+    {
+      "condition": "NQ/Contriever/GPT-3.5",
+      "asr_a": 0.84,
+      "ci_a_lo": 0.68,
+      "ci_a_hi": 0.96,
+      "asr_b": 0.88,
+      "ci_b_lo": 0.76,
+      "ci_b_hi": 1.0,
+      "delta_asr": -0.04,
+      "chi2": 0.0357,
+      "p_value": 0.8937,
+      "stars": "ns",
+      "n_queries": 25
+    },
+    {
+      "condition": "NQ/Contriever/LLaMA-3.1-8B",
+      "asr_a": 0.88,
+      "ci_a_lo": 0.76,
+      "ci_a_hi": 1.0,
+      "asr_b": 0.96,
+      "ci_b_lo": 0.88,
+      "ci_b_hi": 1.0,
+      "delta_asr": -0.08,
+      "chi2": 0.5625,
+      "p_value": 0.5959,
+      "stars": "ns",
+      "n_queries": 25
+    },
+    {
+      "condition": "NQ/Contriever/Mistral-7B",
+      "asr_a": 0.88,
+      "ci_a_lo": 0.76,
+      "ci_a_hi": 1.0,
+      "asr_b": 0.96,
+      "ci_b_lo": 0.88,
+      "ci_b_hi": 1.0,
+      "delta_asr": -0.08,
+      "chi2": 0.5625,
+      "p_value": 0.5959,
+      "stars": "ns",
+      "n_queries": 25
+    }
+  ],
+  "table_s3_defense_robustness": [
+    {
+      "defense": "Paraphrasing",
+      "variant": "mean_5_variants",
+      "grasp_asr": 1.0,
+      "grasp_ci": "1.000 [1.000, 1.000]",
+      "bb_asr": 1.0,
+      "bb_ci": "1.000 [1.000, 1.000]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 1.0,
+      "stars": "ns"
+    },
+    {
+      "defense": "PPL-filter (50th pct)",
+      "variant": "pct=0.5",
+      "grasp_asr": 0.0,
+      "grasp_ci": "0.000 [0.000, 0.000]",
+      "bb_asr": 0.0,
+      "bb_ci": "0.000 [0.000, 0.000]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 1.0,
+      "stars": "ns"
+    },
+    {
+      "defense": "PPL-filter (75th pct)",
+      "variant": "pct=0.75",
+      "grasp_asr": 0.0,
+      "grasp_ci": "0.000 [0.000, 0.000]",
+      "bb_asr": 0.0,
+      "bb_ci": "0.000 [0.000, 0.000]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 1.0,
+      "stars": "ns"
+    },
+    {
+      "defense": "PPL-filter (90th pct)",
+      "variant": "pct=0.9",
+      "grasp_asr": 0.0,
+      "grasp_ci": "0.000 [0.000, 0.000]",
+      "bb_asr": 0.0,
+      "bb_ci": "0.000 [0.000, 0.000]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 1.0,
+      "stars": "ns"
+    },
+    {
+      "defense": "PPL-filter (95th pct)",
+      "variant": "pct=0.95",
+      "grasp_asr": 0.0,
+      "grasp_ci": "0.000 [0.000, 0.000]",
+      "bb_asr": 0.0,
+      "bb_ci": "0.000 [0.000, 0.000]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 1.0,
+      "stars": "ns"
+    },
+    {
+      "defense": "Knowledge Expansion (k=5)",
+      "variant": "k=5",
+      "grasp_asr": 1.0,
+      "grasp_ci": "1.000 [1.000, 1.000]",
+      "bb_asr": 0.8,
+      "bb_ci": "0.800 [0.400, 1.000]",
+      "delta_asr": 0.2,
+      "mcnemar_p": 0.7237,
+      "stars": "N/A"
+    },
+    {
+      "defense": "Knowledge Expansion (k=10)",
+      "variant": "k=10",
+      "grasp_asr": 1.0,
+      "grasp_ci": "1.000 [1.000, 1.000]",
+      "bb_asr": 0.4,
+      "bb_ci": "0.400 [0.000, 0.800]",
+      "delta_asr": 0.6,
+      "mcnemar_p": 0.3074,
+      "stars": "N/A"
+    },
+    {
+      "defense": "Knowledge Expansion (k=20)",
+      "variant": "k=20",
+      "grasp_asr": 0.4,
+      "grasp_ci": "0.400 [0.000, 0.800]",
+      "bb_asr": 0.4,
+      "bb_ci": "0.400 [0.000, 0.800]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 0.8597,
+      "stars": "N/A"
+    },
+    {
+      "defense": "Knowledge Expansion (k=30)",
+      "variant": "k=30",
+      "grasp_asr": 0.4,
+      "grasp_ci": "0.400 [0.000, 0.800]",
+      "bb_asr": 0.2,
+      "bb_ci": "0.200 [0.000, 0.600]",
+      "delta_asr": 0.2,
+      "mcnemar_p": 0.7237,
+      "stars": "N/A"
+    },
+    {
+      "defense": "Knowledge Expansion (k=50)",
+      "variant": "k=50",
+      "grasp_asr": 0.4,
+      "grasp_ci": "0.400 [0.000, 0.800]",
+      "bb_asr": 0.4,
+      "bb_ci": "0.400 [0.000, 0.800]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 0.8026,
+      "stars": "N/A"
+    },
+    {
+      "defense": "Deduplication (SHA-256)",
+      "variant": "sha256",
+      "grasp_asr": 1.0,
+      "grasp_ci": "1.000 [1.000, 1.000]",
+      "bb_asr": 1.0,
+      "bb_ci": "1.000 [1.000, 1.000]",
+      "delta_asr": 0.0,
+      "mcnemar_p": 1.0,
+      "stars": "ns"
+    }
+  ]
+}

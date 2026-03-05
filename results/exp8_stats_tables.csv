@@ -1,0 +1,19 @@
+TABLE S1/S2: ASR Comparison with Statistical Tests
+Condition,GRASP_ASR,GRASP_CI_lo,GRASP_CI_hi,BB_ASR,BB_CI_lo,BB_CI_hi,Delta_ASR,Chi2,p_value,Significance,n_queries
+NQ/Contriever/GPT-3.5,0.84,0.68,0.96,0.88,0.76,1.0,-0.04,0.0357,0.8937,ns,25
+NQ/Contriever/LLaMA-3.1-8B,0.88,0.76,1.0,0.96,0.88,1.0,-0.08,0.5625,0.5959,ns,25
+NQ/Contriever/Mistral-7B,0.88,0.76,1.0,0.96,0.88,1.0,-0.08,0.5625,0.5959,ns,25
+
+TABLE S3: Defense Robustness
+Defense,GRASP_ASR,GRASP_CI,BB_ASR,BB_CI,Delta,p,Stars
+Paraphrasing,1.0,"1.000 [1.000, 1.000]",1.0,"1.000 [1.000, 1.000]",0.0,1.0,ns
+PPL-filter (50th pct),0.0,"0.000 [0.000, 0.000]",0.0,"0.000 [0.000, 0.000]",0.0,1.0,ns
+PPL-filter (75th pct),0.0,"0.000 [0.000, 0.000]",0.0,"0.000 [0.000, 0.000]",0.0,1.0,ns
+PPL-filter (90th pct),0.0,"0.000 [0.000, 0.000]",0.0,"0.000 [0.000, 0.000]",0.0,1.0,ns
+PPL-filter (95th pct),0.0,"0.000 [0.000, 0.000]",0.0,"0.000 [0.000, 0.000]",0.0,1.0,ns
+Knowledge Expansion (k=5),1.0,"1.000 [1.000, 1.000]",0.8,"0.800 [0.400, 1.000]",0.2,0.7237,N/A
+Knowledge Expansion (k=10),1.0,"1.000 [1.000, 1.000]",0.4,"0.400 [0.000, 0.800]",0.6,0.3074,N/A
+Knowledge Expansion (k=20),0.4,"0.400 [0.000, 0.800]",0.4,"0.400 [0.000, 0.800]",0.0,0.8597,N/A
+Knowledge Expansion (k=30),0.4,"0.400 [0.000, 0.800]",0.2,"0.200 [0.000, 0.600]",0.2,0.7237,N/A
+Knowledge Expansion (k=50),0.4,"0.400 [0.000, 0.800]",0.4,"0.400 [0.000, 0.800]",0.0,0.8026,N/A
+Deduplication (SHA-256),1.0,"1.000 [1.000, 1.000]",1.0,"1.000 [1.000, 1.000]",0.0,1.0,ns

@@ -1,0 +1,26 @@
+{
+  "Exp1: ASR Comparison Table": {
+    "status": "OK",
+    "time_s": 29.159767150878906
+  },
+  "Exp2: Injection Efficiency": {
+    "status": "OK",
+    "time_s": 5.535416603088379
+  },
+  "Exp3: Stealth Evaluation": {
+    "status": "OK",
+    "time_s": 0.982884407043457
+  },
+  "Exp4: Defense Robustness": {
+    "status": "OK",
+    "time_s": 1.0520033836364746
+  },
+  "Exp5: Operator Ablation": {
+    "status": "OK",
+    "time_s": 4.217349290847778
+  },
+  "Exp6+7: Transfer+Convergence": {
+    "status": "OK",
+    "time_s": 1.4182589054107666
+  }
+}

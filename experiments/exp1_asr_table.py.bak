@@ -1,0 +1,340 @@
+"""
+Experiment 1: Main ASR Comparison Table
+========================================
+NeurIPS-complete evaluation matching PoisonedRAG Table 1 format.
+
+Conditions:
+  - Datasets:    NQ (100q), HotpotQA (100q), MS-MARCO (100q)
+  - Retrievers:  Contriever, Contriever-ms, ANCE, BM25, DPR
+  - LLMs:        LLaMA-3.1-8B, GPT-3.5, Mistral-7B
+  - Attack:      PoisonedRAG-BB (baseline), GRASP (ours)
+
+Metrics (NeurIPS-standard):
+  - ASR with 95% bootstrap CI
+  - McNemar's test GRASP vs PoisonedRAG-BB (paired per-query)
+  - Retrieval F1,  Similarity delta,  Naturalness / detection AUC
+
+Outputs:
+  results/exp1_asr_table.json
+  results/exp1_asr_table_summary.csv
+"""
+
+from __future__ import annotations
+
+import csv
+import json
+import logging
+import sys
+import time
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+
+ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(ROOT))
+
+from src.grasp_attack import GRASPAttack, GRASPConfig
+from src.eval_utils import (
+    ExperimentMetrics,
+    fill_statistical_fields,
+    naturalness_score,
+    retrieval_metrics,
+    save_results,
+    substring_match,
+)
+from src.mock_infra import (
+    CORPUS_500,
+    DATASET_MAP,
+    BM25Retriever,
+    DPREmbedder,
+    MockEmbedder,
+    ParametricLLM,
+    make_beir_results,
+    make_bm25_results,
+    make_seed_adv_texts,
+)
+
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s | %(levelname)s | %(message)s")
+logger = logging.getLogger(__name__)
+
+RESULTS_DIR = ROOT / "results"
+RESULTS_DIR.mkdir(exist_ok=True)
+
+# ── Configuration ─────────────────────────────────────────────────────────────
+DATASETS   = ["NQ", "HotpotQA", "MS-MARCO"]
+RETRIEVERS = ["Contriever", "Contriever-ms", "ANCE", "BM25", "DPR"]
+LLMS       = ["LLaMA-3.1-8B", "GPT-3.5", "Mistral-7B"]
+TOP_K      = 5
+ADV_PER_QUERY = 5
+
+DATASET_SEEDS  = {"NQ": 42, "HotpotQA": 137, "MS-MARCO": 256}
+RETRIEVER_SEEDS = {"Contriever": 0, "Contriever-ms": 7, "ANCE": 13,
+                   "BM25": 0, "DPR": 200}
+LLM_SEEDS      = {"LLaMA-3.1-8B": 0, "GPT-3.5": 5, "Mistral-7B": 9}
+
+GRASP_CFG = GRASPConfig(
+    population_size=20, num_generations=30,
+    mutation_rate=0.20, crossover_rate=0.70,
+    tournament_size=3, elite_frac=0.10,
+    max_genes=12, fragment_mutation_prob=0.70,
+    fitness_lambda_stealth=0.05,
+    fitness_lambda_paraphrase=0.30,
+    fitness_lambda_naturalness=0.15,
+    seed=42,
+)
+
+# ── Retriever helpers ─────────────────────────────────────────────────────────
+
+def _make_dense_embedder(dataset: str, retriever: str) -> MockEmbedder:
+    seed = DATASET_SEEDS[dataset] + RETRIEVER_SEEDS[retriever]
+    if retriever == "DPR":
+        return DPREmbedder(seed=seed)
+    return MockEmbedder(seed=seed)
+
+
+def _build_retrieval(
+    qa_pairs: List[Dict],
+    corpus: Dict,
+    retriever: str,
+    dataset: str,
+) -> Tuple[Dict, Optional[MockEmbedder], Optional[BM25Retriever]]:
+    """Return (beir_results, dense_embedder_or_None, bm25_or_None)."""
+    if retriever == "BM25":
+        ids   = list(corpus.keys())
+        texts = [corpus[d]["text"] for d in ids]
+        bm25  = BM25Retriever(texts, ids)
+        res   = make_bm25_results(qa_pairs, corpus, top_k=TOP_K)
+        return res, None, bm25
+    emb = _make_dense_embedder(dataset, retriever)
+    res = make_beir_results(qa_pairs, corpus, emb, top_k=TOP_K)
+    return res, emb, None
+
+
+def _sim(text: str, query: str,
+         emb: Optional[MockEmbedder],
+         bm25: Optional[BM25Retriever]) -> float:
+    if emb is not None:
+        q = emb.encode(query)
+        return float(np.dot(q, emb.encode(text)))
+    if bm25 is not None:
+        return bm25.score_document(query, text)
+    return 0.0
+
+
+# ── Paraphrase generator (deterministic, no external calls) ──────────────────
+
+_PARA_RULES: List[Tuple[str, str]] = [
+    ("who invented", "who created"),
+    ("who created", "who developed"),
+    ("what is the capital of", "what city is the capital of"),
+    ("what is the", "can you tell me what the"),
+    ("when did", "in what year did"),
+    ("which is", "which one is"),
+    ("how many", "what is the number of"),
+    ("who was", "who served as"),
+]
+
+
+def _paraphrases(question: str, n: int = 3) -> List[str]:
+    base = question.lower().rstrip("?").strip()
+    out: List[str] = []
+    for src, tgt in _PARA_RULES:
+        if src in base and len(out) < n:
+            out.append(base.replace(src, tgt, 1).capitalize() + "?")
+    while len(out) < n:
+        out.append("In your knowledge, " + base + "?")
+    return out[:n]
+
+
+# ── Core per-condition runner ─────────────────────────────────────────────────
+
+def run_condition(
+    dataset: str,
+    retriever: str,
+    llm_name: str,
+    attack_method: str,
+) -> ExperimentMetrics:
+    logger.info("  %s | %s | %s | %s", dataset, retriever, llm_name, attack_method)
+
+    qa_pairs = DATASET_MAP[dataset]
+    corpus   = CORPUS_500
+
+    beir_res, emb, bm25 = _build_retrieval(qa_pairs, corpus, retriever, dataset)
+
+    llm = ParametricLLM(
+        model_name=llm_name,
+        seed=DATASET_SEEDS[dataset] + LLM_SEEDS[llm_name],
+    )
+    embed_fn = (emb.encode if emb is not None else lambda t: np.zeros(128))
+    grasp = GRASPAttack(embed_fn=embed_fn, config=GRASP_CFG, prepend_query=True)
+
+    # Baseline naturalness from clean corpus (first 100 docs)
+    clean_nat = [naturalness_score(corpus[d]["text"])
+                 for d in list(corpus.keys())[:100]]
+
+    asr_cnt = 0
+    success_vector: List[int] = []
+    f1_list: List[float] = []
+    sim_evo_list: List[float] = []
+    sim_base_list: List[float] = []
+    per_query: List[Dict] = []
+    total_t = 0.0
+
+    for qa in qa_pairs:
+        qid      = qa["id"]
+        question = qa["question"]
+        correct  = qa["correct_answer"]
+        incorrect = qa["incorrect_answer"]
+
+        topk_ids    = list(beir_res[qid].keys())[:TOP_K]
+        topk_scores = list(beir_res[qid].values())[:TOP_K]
+        topk_texts  = [corpus[d]["text"] for d in topk_ids]
+
+        seed_texts = make_seed_adv_texts(question, incorrect, n=ADV_PER_QUERY)
+
+        if attack_method == "PoisonedRAG-BB":
+            final_texts  = [question.rstrip(".") + ". " + s for s in seed_texts]
+            evolved_sims = [_sim(t, question, emb, bm25) for t in final_texts]
+            t_elapsed    = 0.001
+
+        else:  # GRASP
+            t0 = time.time()
+            res = grasp.attack_query(
+                query_id=qid, question=question,
+                correct_answer=correct, incorrect_answer=incorrect,
+                seed_adv_texts=seed_texts, clean_topk_scores=topk_scores,
+                adv_per_query=ADV_PER_QUERY,
+                paraphrase_queries=_paraphrases(question, 3),
+                verbose=False,
+            )
+            t_elapsed    = time.time() - t0
+            final_texts  = res.evolved_texts
+            evolved_sims = res.evolved_sims
+
+        total_t += t_elapsed
+
+        threshold  = topk_scores[-1] if topk_scores else 0.0
+        adv_in_topk = sum(1 for s in evolved_sims if s >= threshold)
+        prec, rec, f1 = retrieval_metrics(adv_in_topk, TOP_K, ADV_PER_QUERY)
+        f1_list.append(f1)
+
+        # RAG pipeline: inject + re-rank + generate
+        all_docs = list(zip(topk_texts, topk_scores))
+        all_docs += [(t, s) for t, s in zip(final_texts, evolved_sims)]
+        all_docs.sort(key=lambda x: x[1], reverse=True)
+        contexts = [d[0] for d in all_docs[:TOP_K]]
+
+        response = llm.generate(question, contexts, correct, incorrect)
+        success  = int(substring_match(incorrect, response))
+        asr_cnt += success
+        success_vector.append(success)
+
+        seed_sims = [_sim(s, question, emb, bm25) for s in seed_texts]
+        sim_evo_list.append(float(np.mean(evolved_sims)))
+        sim_base_list.append(float(np.mean(seed_sims)))
+        nat_adv = float(np.mean([naturalness_score(t) for t in final_texts]))
+
+        per_query.append({
+            "query_id": qid, "question": question,
+            "attack_success": bool(success),
+            "adv_in_topk": adv_in_topk, "f1": f1,
+            "sim_evolved": float(np.mean(evolved_sims)),
+            "sim_baseline": float(np.mean(seed_sims)),
+            "naturalness_adv": nat_adv,
+            "time_s": t_elapsed,
+        })
+
+    n = len(qa_pairs)
+    metrics = ExperimentMetrics(
+        dataset=dataset, retriever=retriever, llm=llm_name,
+        attack_method=attack_method, n_queries=n, n_attackable=n,
+        asr=asr_cnt / n, asr_count=asr_cnt,
+        f1_mean=float(np.mean(f1_list)),
+        precision_mean=float(np.mean([
+            retrieval_metrics(round(f * TOP_K), TOP_K, ADV_PER_QUERY)[0]
+            for f in f1_list])),
+        recall_mean=float(np.mean([
+            retrieval_metrics(round(f * TOP_K), TOP_K, ADV_PER_QUERY)[1]
+            for f in f1_list])),
+        sim_mean_evolved=float(np.mean(sim_evo_list)),
+        sim_mean_baseline=float(np.mean(sim_base_list)),
+        sim_delta=float(np.mean(sim_evo_list)) - float(np.mean(sim_base_list)),
+        mean_time_per_query=total_t / n,
+        success_vector=success_vector,
+        per_query=per_query,
+    )
+    fill_statistical_fields(metrics, clean_naturalness_scores=clean_nat)
+    return metrics
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+def main() -> List[Dict]:
+    logger.info("=" * 70)
+    logger.info("Exp 1: ASR Table  (100q × 5 retrievers × 3 LLMs × 2 methods)")
+    logger.info("=" * 70)
+
+    all_results: List[Dict] = []
+    baseline_vecs: Dict[str, List[int]] = {}
+
+    for dataset in DATASETS:
+        for retriever in RETRIEVERS:
+            for llm in LLMS:
+                key = f"{dataset}|{retriever}|{llm}"
+                bb_m: Optional[ExperimentMetrics] = None
+
+                for method in ["PoisonedRAG-BB", "GRASP"]:
+                    m = run_condition(dataset, retriever, llm, method)
+
+                    if method == "PoisonedRAG-BB":
+                        bb_m = m
+                        baseline_vecs[key] = list(m.success_vector)
+                    else:
+                        fill_statistical_fields(
+                            m,
+                            baseline_success_vector=baseline_vecs.get(key),
+                        )
+
+                    all_results.append(m.to_dict())
+                    logger.info(m.summary_str())
+                    fname = (
+                        f"exp1_{dataset}_{retriever}_{llm}_{method}"
+                        .replace("-", "_").replace(" ", "_").replace(".", "_")
+                        + ".json"
+                    )
+                    save_results(m, RESULTS_DIR / fname)
+
+    # Save JSON
+    with open(RESULTS_DIR / "exp1_asr_table.json", "w") as f:
+        json.dump(all_results, f, indent=2)
+
+    # Save CSV
+    fields = ["dataset", "retriever", "llm", "attack_method",
+              "asr", "asr_ci_low", "asr_ci_high",
+              "mcnemar_p", "mcnemar_significant",
+              "f1_mean", "sim_delta", "detection_auc", "mean_time_per_query"]
+    with open(RESULTS_DIR / "exp1_asr_table_summary.csv", "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        for r in all_results:
+            w.writerow({k: r.get(k, "") for k in fields})
+
+    # Print table
+    hdr = (f"{'Dataset':<12} {'Retriever':<14} {'LLM':<14} {'Method':<18} "
+           f"{'ASR':>6} {'95%CI':>14} {'McN-p':>8} {'F1':>6} {'SimΔ':>8}")
+    print("\n" + "=" * len(hdr)); print(hdr); print("-" * len(hdr))
+    for r in all_results:
+        ci  = f"[{r['asr_ci_low']:.3f},{r['asr_ci_high']:.3f}]"
+        sig = "✓" if r.get("mcnemar_significant") else "·"
+        print(f"{r['dataset']:<12} {r['retriever']:<14} {r['llm']:<14} "
+              f"{r['attack_method']:<18} {r['asr']:>6.3f} {ci:>14} "
+              f"{r['mcnemar_p']:>7.4f}{sig} {r['f1_mean']:>6.4f} "
+              f"{r['sim_delta']:>+8.4f}")
+    print("=" * len(hdr))
+    return all_results
+
+
+if __name__ == "__main__":
+    main()
